@@ -1,224 +1,165 @@
-![n8n ConnectWise Manage and Smileback Integration for MSP Automation](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n MSP AI - Azure Infrastructure
 
-# n8n ConnectWise Manage and SmileBack Integration for MSP Automation
+This directory contains Bicep templates to deploy the n8n MSP AI solution in Azure using Container Apps with a PostgreSQL database. This infrastructure is designed to provide a secure, scalable environment for running n8n workflows that integrate with MSP tools and AI services.
 
-This repository contains powerful n8n integrations for ConnectWise Manage and SmileBack, specifically designed for MSPs (Managed Service Providers) to automate their workflows and operations. It includes both ConnectWise Manage and SmileBack nodes for n8n and infrastructure code to deploy n8n with Azure Container Apps for a secure, scalable automation platform.
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fgith-i2p%2Fn8n-nodes-msp-ai%2Fmain%2Finfra%2Fazuredeploy.json)
 
-[![Deploy n8n with ConnectWise Manage Integration to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fadamhancock%2Fn8n-nodes-msp-ai%2Fmain%2Finfra%2Fazuredeploy.json)
-[![Sponsor me](https://img.shields.io/static/v1?label=Sponsor&message=❤&logo=GitHub&color=ff69b4)](https://github.com/sponsors/adamhancock)
+> **Note:** To use the "Deploy to Azure" button, ensure your Bicep files are compiled to ARM templates and pushed to your repository.
 
-## 🚀 MSP Automation with ConnectWise Manage and n8n
+### Preparing the "Deploy to Azure" Button
 
-Streamline your MSP operations by automating ConnectWise Manage workflows with n8n. This integration enables you to build powerful automation workflows that connect ConnectWise Manage with other tools in your MSP tech stack.
+1. Compile the Bicep files to an ARM template:
+   - On Linux/macOS: `chmod +x build-arm-template.sh && ./build-arm-template.sh`
+   - On Windows: `build-arm-template.cmd`
 
-### 🔄 Integration Features
+2. Push the generated `azuredeploy.json` file to the GitHub repository
 
-This package provides comprehensive integration with ConnectWise Manage API, allowing you to:
+## Architecture
 
-- **Automate ticket management** - Create, update, and close service tickets automatically
-- **Streamline client onboarding** - Automate company and contact creation
-- **Track time efficiently** - Automate time entries for billing accuracy
-- **Enhance project management** - Automate project tasks and updates
-- **Improve sales processes** - Automate opportunity tracking and follow-ups
-- **Real-time notifications** - Set up webhooks to trigger workflows based on ConnectWise Manage events
-- **Custom workflow automation** - Build complex automation workflows specific to your MSP needs
+The infrastructure consists of:
 
-### 📊 Supported Resources
+- **Azure Container App**: Hosts the n8n MSP AI application, allowing you to run workflows that integrate with ConnectWise Manage and other MSP tools
+- **Azure Container App Environment**: Provides the hosting environment for the Container App with managed networking and logging
+- **Azure PostgreSQL Flexible Server**: Database for storing n8n workflows, credentials, and execution data
+- **Private Endpoint**: Securely connects to the PostgreSQL database without exposing it to the public internet
+- **Private DNS Zone**: Resolves the private endpoint DNS name for secure database connectivity
+- **Virtual Network**: Simplified network infrastructure with a subnet for private endpoints
+- **Log Analytics Workspace**: For monitoring and logging of the n8n MSP AI application
 
-#### ConnectWise Manage Resources
+This architecture uses a simplified networking approach:
+- Container App Environment uses Azure's managed VNet feature
+- A minimal VNet is created only for the private endpoint to the PostgreSQL database
 
-- **Service Tickets** - Manage tickets, add notes, track status changes
-- **Companies** - Create and update client companies
-- **Contacts** - Manage client contacts
-- **Time Entries** - Track billable and non-billable time
-- **Projects** - Manage project details and tasks
-- **Opportunities** - Track sales opportunities
-- **Agreements** - Manage service agreements
-- **Activities** - Track activities and follow-ups
-- **Members** - Manage team members
-- **Configurations** - Track client configurations
-- **Invoices** - Manage billing and invoices
-- **Expenses** - Track expenses
-- **Purchase Orders** - Manage procurement
-- **Product Catalog** - Access product information
-- **Schedules** - Manage scheduling
+## Security Features
 
-#### SmileBack Resources
+- **Private Endpoints**: The PostgreSQL database is deployed with private endpoints, ensuring that database traffic stays within the Azure network and doesn't traverse the public internet.
+- **No Public Access**: The PostgreSQL server has public network access disabled, enhancing security.
+- **Network Isolation**: Container Apps and database resources are deployed in separate subnets.
+- **Secure Credentials Storage**: Sensitive information like API keys and passwords are stored securely in the database.
 
-The SmileBack integration supports operations on these resources:
+## Benefits for MSP Operations
 
-- **Feedback** - Collect and manage customer feedback
-- **CSAT Surveys** - Track Customer Satisfaction scores
-- **NPS Surveys** - Manage Net Promoter Score surveys
-- **Survey Responses** - Access detailed customer responses
-- **Reports** - Generate feedback analytics and reports
-- **Tags** - Manage feedback categorization
-- **Users** - Handle user management
-- **Teams** - Organize and manage team structures
+- **Scalable Automation**: Deploy n8n workflows that can scale with your MSP operations
+- **Secure Integration**: Connect to ConnectWise Manage and other MSP tools securely
+- **Reliable Infrastructure**: Azure Container Apps provide reliable, managed infrastructure
+- **Cost-Effective**: Pay only for the resources you use with flexible scaling options
+- **Monitoring**: Built-in logging and monitoring for your automation workflows
 
-## 🏗️ Azure Deployment Infrastructure
+## Prerequisites
 
-The `/infra` directory contains Bicep templates to deploy n8n in Azure using Container Apps with a PostgreSQL database, providing a secure and scalable environment for your MSP automation workflows.
+- Azure CLI installed and logged in
+- Subscription with permissions to create resources
+- (Optional) Azure Key Vault for storing secrets
 
-### 🔒 Azure Infrastructure Features
+## Deployment
 
-- **Secure environment** - Private endpoints for database connectivity
-- **Scalable architecture** - Azure Container Apps for flexible scaling
-- **Cost-effective** - Pay-as-you-go pricing model
-- **Managed services** - Reduced operational overhead
-- **High availability** - Reliable platform for critical MSP workflows
-- **Integrated logging** - Comprehensive monitoring and troubleshooting
-- **Easy deployment** - One-click deployment with the "Deploy to Azure" button
+### 1. Update Parameters
 
-## 🛠️ Prerequisites
+Edit the `main.parameters.json` file to set your desired configuration:
 
-To develop or use this integration, you need:
+- `baseName`: Base name for all resources (default: "n8n")
+- `location`: Azure region to deploy to (default: "westeurope")
+- `postgresAdminUsername`: PostgreSQL admin username
+- `postgresAdminPassword`: PostgreSQL admin password (preferably from Key Vault)
+- `n8nEncryptionKey`: Encryption key for n8n (preferably from Key Vault)
+- `n8nContainerImage`: n8n container image to use (default: "docker.io/n8nio/n8n:latest")
+- `tags`: Resource tags
 
-* [git](https://git-scm.com/downloads) - For source control
-* **Node.js and pnpm** - Minimum version Node 18. Install using [nvm](https://github.com/nvm-sh/nvm) for Linux, Mac, and WSL. For Windows, follow Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* **n8n** - Install globally with:
-  ```
-  pnpm install n8n -g
-  ```
-* **API Credentials** - You'll need:
-  * ConnectWise Manage API credentials from your instance
-  * SmileBack API credentials from your account
-
-## 📦 Installation Options
-
-### 🧩 As a Community Node in n8n
-
-The easiest way to use this integration is to install it directly from the n8n UI as a community node:
-
-1. Open your n8n instance
-2. Go to **Settings** > **Community Nodes**
-3. Click **Install**
-4. Enter `@adamhancock/n8n-nodes-msp-ai` in the "npm package name" field
-5. Click **Install**
-6. Reload n8n when prompted
-
-After installation, the ConnectWise Manage nodes will be available in your n8n workflows.
-
-### 📥 As an npm Package
-
-To use this node in your existing n8n installation via npm:
+### 2. Deploy Using Azure CLI
 
 ```bash
-npm install @adamhancock/n8n-nodes-msp-ai
+# Create a resource group if you don't have one
+az group create --name rg-n8n-msp --location westeurope
+
+# Deploy the Bicep template
+az deployment group create \
+  --resource-group rg-n8n-msp \
+  --template-file main.bicep \
+  --parameters @main.parameters.json
 ```
 
-Then restart your n8n instance to load the new nodes.
+### 3. For Local Testing with Explicit Parameters
 
-### 🧪 For Development
+```bash
+# Deploy with explicit parameters (not recommended for production)
+az deployment group create \
+  --resource-group rg-n8n-msp \
+  --template-file main.bicep \
+  --parameters baseName=n8n-msp \
+  --parameters postgresAdminUsername=n8nadmin \
+  --parameters postgresAdminPassword=YourStrongPassword123! \
+  --parameters n8nEncryptionKey=YourEncryptionKey123!
+```
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/adamhancock/n8n-nodes-msp-ai.git
-   ```
-2. Install dependencies:
-   ```
-   cd n8n-nodes-msp-ai
-   pnpm install
-   ```
-3. Build the code:
-   ```
-   pnpm build
-   ```
-4. Link to your n8n installation:
-   ```
-   npm link
-   ```
-   In your n8n installation directory:
-   ```
-   npm link @adamhancock/n8n-nodes-msp-ai
-   ```
+### 4. Using the Deployment Scripts
 
-## ☁️ Azure Deployment Methods
+For convenience, you can use the provided deployment scripts:
 
-### 🔘 One-Click Deployment
+#### On Linux/macOS:
+```bash
+# Make the script executable
+chmod +x deploy.sh
 
-Click the "Deploy to Azure" button at the top of this README to deploy n8n with the ConnectWise Manage integration directly to your Azure subscription.
+# Run the deployment
+./deploy.sh
+```
 
-### ⌨️ Manual Deployment
+#### On Windows:
+```cmd
+# Run the deployment
+deploy.cmd
+```
 
-1. Navigate to the `/infra` directory
-2. Update parameters in `main.parameters.json`
-3. Run the deployment script:
-   - On Linux/macOS: `chmod +x deploy.sh && ./deploy.sh`
-   - On Windows: `deploy.cmd`
+Both scripts support the same command-line parameters:
+```
+  -g, --resource-group    Resource group name (default: rg-n8n)
+  -l, --location          Azure region (default: westeurope)
+  -n, --name              Deployment name (default: n8n-deployment)
+  -p, --parameters        Parameters file (default: main.parameters.json)
+  -h, --help              Show help message
+```
 
-For more detailed deployment instructions, see the [infrastructure README](/infra/README.md).
+## Module Structure
 
-## 🔌 Using the Integrations
+- `main.bicep`: Main deployment file that orchestrates all modules
+- `modules/`: Directory containing modular Bicep templates
+  - `container-app-environment.bicep`: Container App Environment
+  - `n8n-container-app.bicep`: n8n Container App
+  - `postgresql.bicep`: PostgreSQL Flexible Server
+  - `networking.bicep`: Virtual Network and Subnets
+  - `log-analytics.bicep`: Log Analytics Workspace
+  - `private-endpoint.bicep`: Private Endpoint for secure connectivity
+  - `private-dns-zone.bicep`: Private DNS Zone for name resolution
 
-After installation, both ConnectWise Manage and SmileBack nodes will be available in your n8n instance:
+## Security Considerations
 
-### 🔄 ConnectWise Manage Node
+- The PostgreSQL server is configured with private endpoints for secure access
+- Public network access is disabled for the PostgreSQL server
+- For additional security, consider:
+  - Implementing network security groups
+  - Setting up Azure AD authentication
+  - Using managed identities for Container Apps
 
-Use this node in your workflows to interact with ConnectWise Manage resources. It supports operations like:
+## Customization
 
-- Creating and updating tickets
-- Managing companies and contacts
-- Tracking time entries
-- Handling projects and opportunities
-- And much more
+- Adjust the SKU sizes in the parameters to match your performance requirements
+- Modify the container image to use a specific n8n version
+- Update environment variables in the n8n Container App module to configure n8n behavior
+- Add additional ConnectWise Manage specific environment variables as needed
 
-### 📡 ConnectWise Manage Trigger
+## Post-Deployment Setup
 
-Use this node to start workflows based on events in ConnectWise Manage, such as:
+After deployment:
 
-- New ticket created
-- Ticket status changed
-- New company added
-- New contact created
-- And many other events
+1. Access the n8n URL provided in the deployment outputs
+2. Set up your ConnectWise Manage credentials in n8n
+3. Import or create workflows for your MSP automation needs
+4. Configure webhooks for real-time integration with ConnectWise Manage
 
-### 📊 SmileBack Node
+## Outputs
 
-Use this node in your workflows to interact with SmileBack resources. It supports operations like:
-
-- Managing feedback collection
-- Creating and managing surveys
-- Accessing customer responses
-- Generating reports
-- Managing tags and categorization
-- And more
-
-### 📡 SmileBack Trigger
-
-Use this node to start workflows based on events in SmileBack, such as:
-
-- New feedback received
-- Survey response submitted
-- NPS score changes
-- Tag changes
-- And other events
-
-## ⚙️ Configuration
-
-### ConnectWise Manage Configuration
-
-To use the ConnectWise Manage integration:
-
-1. Go to Settings > Credentials
-2. Create a new credential of type "ConnectWise Manage API"
-3. Enter your ConnectWise Manage site URL, company ID, public key, and private key
-
-### SmileBack Configuration
-
-To use the SmileBack integration:
-
-1. Go to Settings > Credentials
-2. Create a new credential of type "SmileBack API"
-3. Enter your SmileBack API key and account settings
-
-## 📚 Resources
-
-- [n8n Documentation](https://docs.n8n.io/)
-- [ConnectWise Manage API Documentation](https://developer.connectwise.com/)
-- [SmileBack API Documentation](https://api.smileback.com/docs)
-- [Azure Container Apps Documentation](https://docs.microsoft.com/en-us/azure/container-apps/)
-
-## 📄 License
-
-[MIT](LICENSE.md)
+After deployment, you'll receive:
+- n8n URL (access this to start creating your MSP automation workflows)
+- PostgreSQL server FQDN
+- PostgreSQL server name
+- PostgreSQL database name
